@@ -1,32 +1,36 @@
-import cv2
-import numpy as np
+import cv2  # OpenCV per l'estrazione dei pattern visivi
+import numpy as np # NumPy per la gestione dei pixel come dati matriciali
 
-def analizza_attenzione():
-    # Carica la foto
-    img = cv2.imread("foto.jpg")
+def analizza_ads(percorso, etichetta):
+    # CARICAMENTO: Lettura di dati non strutturati (Immagini)
+    img = cv2.imread(percorso)
     if img is None:
-        print("Errore: non trovo foto.jpg!")
+        print(f"Errore: non trovo {percorso}")
         return
 
-    # Trasforma in scala di grigi per l'analisi
+    # PRE-PROCESSING: Conversione in scala di grigi per il Denoising
+    # Riduce il rumore cromatico per far emergere il segnale informativo
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Applica un filtro per evidenziare i bordi e il contrasto (Simula l'attenzione visiva)
-    # Usiamo il filtro di Sobel per trovare i cambiamenti di intensità
-    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
-    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
-    mag = np.sqrt(sobelx**2 + sobely**2)
+    # PATTERN EXTRACTION: Gradiente di Sobel (Algoritmo di Canny)
+    # Calcola le variazioni di intensità luminosa per trovare i bordi
+    edges = cv2.Canny(gray, 100, 200)
     
-    # Rendi la mappa visibile (0-255)
-    saliency_map = np.uint8(255 * mag / np.max(mag))
+    # KNOWLEDGE PRESENTATION: Generazione Mappa di Salienza
+    # Un filtro Gaussian Blur simula la distribuzione dell'attenzione umana
+    saliency_map = cv2.GaussianBlur(edges, (21, 21), 0)
 
-    # Mostra i risultati
-    cv2.imshow("1. Immagine Originale", img)
-    cv2.imshow("2. Analisi dell'Attenzione (Mappa)", saliency_map)
-    
-    print("Premi un tasto qualsiasi sulla foto per chiudere.")
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # Visualizzazione dei risultati
+    cv2.imshow(f"ORIGINALE - {etichetta}", img)
+    cv2.imshow(f"MAPPA DI SALIENZA - {etichetta}", saliency_map)
 
-if __name__ == "__main__":
-    analizza_attenzione()
+# ESECUZIONE COMPARATIVA (A/B Testing)
+print("TEST A: Analisi Brand Efficace (New Balance)...")
+analizza_ads("foto.jpg", "NB 550 (SUCCESS)")
+cv2.waitKey(0) # Attesa interazione utente
+
+print("TEST B: Analisi Brand con Rumore (Jordan 4)...")
+analizza_ads("foto_noise.jpg", "JORDAN (NOISE)")
+cv2.waitKey(0)
+
+cv2.destroyAllWindows()
